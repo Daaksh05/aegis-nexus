@@ -12,15 +12,15 @@ before deploying a real change.
 
 ## Repo layout
 
-| Path | Purpose |
-|------|---------|
-| `apps/web/` | Next.js + TypeScript + D3 frontend |
-| `services/api/` | FastAPI (routers, schemas, services) |
-| `services/engine/` | Cascade, threat, scoring, Monte Carlo (pure Python, no HTTP) |
-| `packages/contracts/` | OpenAPI spec and generated TypeScript client |
-| `data/seed/` | Synthetic transit twin |
-| `infra/` | Docker Compose, CI |
-| `docs/adr/` | Architecture decision records |
+| Path                  | Purpose                                                      |
+| --------------------- | ------------------------------------------------------------ |
+| `apps/web/`           | Next.js + TypeScript + D3 frontend                           |
+| `services/api/`       | FastAPI (routers, schemas, services)                         |
+| `services/engine/`    | Cascade, threat, scoring, Monte Carlo (pure Python, no HTTP) |
+| `packages/contracts/` | OpenAPI spec and generated TypeScript client                 |
+| `data/seed/`          | Synthetic transit twin                                       |
+| `infra/`              | Docker Compose, CI                                           |
+| `docs/adr/`           | Architecture decision records                                |
 
 ## Quick start
 
