@@ -1,0 +1,5 @@
+fastapi==0.115.6
+neo4j==5.27.0
+psycopg[binary]==3.2.3
+pydantic-settings==2.7.1
+uvicorn[standard]==0.34.0
