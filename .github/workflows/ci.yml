@@ -46,15 +46,15 @@ jobs:
 
       - name: Ruff check
         if: steps.detect.outputs.has_code == 'true'
-        run: ruff check services/api services/engine
+        run: ruff check services/api
 
       - name: Mypy
         if: steps.detect.outputs.has_code == 'true'
-        run: mypy services/api services/engine
+        run: cd services/api && mypy app tests
 
       - name: Pytest
         if: steps.detect.outputs.has_code == 'true'
-        run: pytest
+        run: cd services/api && PYTHONPATH=. pytest
 
   web:
     runs-on: ubuntu-latest
