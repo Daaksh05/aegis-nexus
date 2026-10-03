@@ -102,6 +102,122 @@ h1 {
   line-height: 1.5;
 }
 
+.site-footer {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.footer-inner {
+  width: min(100% - 2 * var(--space-5), 72rem);
+  min-height: 3.5rem;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.footer-inner a {
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  text-decoration: none;
+}
+
+.footer-inner a:hover {
+  color: var(--color-accent-strong);
+  text-decoration: underline;
+}
+
+.status-page {
+  max-width: 58rem;
+}
+
+.status-overview {
+  border-top: 3px solid var(--color-highlight);
+  padding-top: var(--space-5);
+}
+
+.status-overview > p:last-child {
+  margin: var(--space-3) 0 0;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.status-summary {
+  margin: var(--space-5) 0 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.status-card {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-top: 3px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  padding: var(--space-4);
+}
+
+.status-card[data-state="ok"] {
+  border-top-color: var(--color-accent);
+}
+
+.status-card[data-state="down"] {
+  border-top-color: #b84d43;
+}
+
+.status-card h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-indicator::before {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--color-muted);
+  content: "";
+}
+
+.status-card[data-state="ok"] .status-indicator::before {
+  background: var(--color-accent);
+}
+
+.status-card[data-state="down"] .status-indicator::before {
+  background: #b84d43;
+}
+
+.status-detail {
+  margin: var(--space-2) 0 0;
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 42rem) {
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 36rem) {
   .header-inner {
     width: 100%;
@@ -125,5 +241,10 @@ h1 {
 
   .page-content {
     padding-block: var(--space-6);
+  }
+
+  .footer-inner {
+    width: 100%;
+    padding-inline: var(--space-4);
   }
 }

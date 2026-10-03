@@ -1,18 +1,46 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel
 
 from app.healthchecks import check_neo4j, check_postgres
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 
-@app.get("/health")
+class HealthResponse(BaseModel):
+    status: Literal["ok"]
+
+
+class ServiceStatuses(BaseModel):
+    postgres: Literal["ok", "unavailable"]
+    neo4j: Literal["ok", "unavailable"]
+
+
+class ReadyResponse(BaseModel):
+    status: Literal["ready"]
+    services: ServiceStatuses
+
+
+class NotReadyDetail(BaseModel):
+    status: Literal["not_ready"]
+    services: ServiceStatuses
+
+
+class NotReadyResponse(BaseModel):
+    detail: NotReadyDetail
+
+
+@app.get("/health", response_model=HealthResponse)
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/ready")
+@app.get(
+    "/ready",
+    response_model=ReadyResponse,
+    responses={503: {"model": NotReadyResponse}},
+)
 def ready(
     postgres_ok: Annotated[bool, Depends(check_postgres)],
     neo4j_ok: Annotated[bool, Depends(check_neo4j)],
