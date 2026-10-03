@@ -1,4 +1,8 @@
-.PHONY: up down logs test lint format doctor
+.PHONY: up down logs test lint format doctor contracts
+
+contracts:
+	python3 services/api/scripts/export_openapi.py
+	cd apps/web && npm run generate:api
 
 up:
 	docker compose -f infra/docker-compose.yml --env-file .env up -d
