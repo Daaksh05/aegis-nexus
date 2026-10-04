@@ -1,4 +1,4 @@
-.PHONY: up down logs test lint format doctor contracts
+.PHONY: up down logs test test-graph lint format doctor contracts
 
 contracts:
 	python3 services/api/scripts/export_openapi.py
@@ -17,13 +17,16 @@ test:
 	@if [ -z "$$(find services/api -type f ! -name .gitkeep -print -quit)" ]; then \
 		echo "Skipping API tests: services/api contains only .gitkeep."; \
 	else \
-		python3 -m pytest; \
+		cd services/api && PYTHONPATH=. pytest; \
 	fi
 	@if [ -z "$$(find apps/web -type f ! -name .gitkeep -print -quit)" ]; then \
 		echo "Skipping web tests: apps/web contains only .gitkeep."; \
 	else \
 		cd apps/web && npm test; \
 	fi
+
+test-graph:
+	@set -a; . ./.env; set +a; cd services/api && PYTHONPATH=. pytest -m neo4j
 
 lint:
 	@if [ -z "$$(find services/api -type f ! -name .gitkeep -print -quit)" ]; then \
