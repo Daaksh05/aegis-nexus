@@ -11,6 +11,8 @@ from app.config import Settings, get_settings
 from app.graph.queries import (
     EDGE_PROPERTIES,
     GET_NODE,
+    GET_NODE_DETAILS,
+    NODE_LABELS,
     TARGET_EXISTS,
     impact_query,
     upsert_edge_query,
@@ -38,6 +40,13 @@ class ImpactedNode:
 class ImpactResult:
     found: bool
     dependents: tuple[ImpactedNode, ...]
+
+
+@dataclass(frozen=True)
+class NodeDetails:
+    id: str
+    name: str
+    label: str
 
 
 def create_driver(settings: Settings | None = None) -> Driver:
@@ -112,6 +121,29 @@ class GraphRepository:
         with self._session() as session:
             record = session.run(GET_NODE, id=id).single()
         return None if record is None else dict(record["node"])
+
+    def get_node_details(self, node_ids: tuple[str, ...]) -> dict[str, NodeDetails]:
+        if not node_ids:
+            return {}
+        with self._session() as session:
+            records = session.run(GET_NODE_DETAILS, ids=list(node_ids))
+            details: dict[str, NodeDetails] = {}
+            for record in records:
+                node_id = record["id"]
+                name = record["name"]
+                label = record["label"]
+                if (
+                    not isinstance(node_id, str)
+                    or not isinstance(name, str)
+                    or not isinstance(label, str)
+                    or label not in NODE_LABELS
+                ):
+                    raise TypeError("Neo4j returned invalid node details")
+                details[node_id] = NodeDetails(id=node_id, name=name, label=label)
+        missing = set(node_ids) - details.keys()
+        if missing:
+            raise RuntimeError(f"Neo4j did not return node details for: {sorted(missing)}")
+        return details
 
     def get_impact(self, node_id: str, max_depth: int = 10) -> ImpactResult:
         depth = validate_max_depth(max_depth)

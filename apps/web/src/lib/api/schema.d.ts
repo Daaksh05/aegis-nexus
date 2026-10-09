@@ -4,143 +4,311 @@
  */
 
 export interface paths {
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Health */
-        get: operations["health_health_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  "/health": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/ready": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Ready */
-        get: operations["ready_ready_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /** Health */
+    get: operations["health_health_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/nodes/{node_id}/impact": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /** Node Impact */
+    get: operations["node_impact_nodes__node_id__impact_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/ready": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Ready */
+    get: operations["ready_ready_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        /** HealthResponse */
-        HealthResponse: {
-            /**
-             * Status
-             * @constant
-             */
-            status: "ok";
-        };
-        /** NotReadyDetail */
-        NotReadyDetail: {
-            services: components["schemas"]["ServiceStatuses"];
-            /**
-             * Status
-             * @constant
-             */
-            status: "not_ready";
-        };
-        /** NotReadyResponse */
-        NotReadyResponse: {
-            detail: components["schemas"]["NotReadyDetail"];
-        };
-        /** ReadyResponse */
-        ReadyResponse: {
-            services: components["schemas"]["ServiceStatuses"];
-            /**
-             * Status
-             * @constant
-             */
-            status: "ready";
-        };
-        /** ServiceStatuses */
-        ServiceStatuses: {
-            /**
-             * Neo4J
-             * @enum {string}
-             */
-            neo4j: "ok" | "unavailable";
-            /**
-             * Postgres
-             * @enum {string}
-             */
-            postgres: "ok" | "unavailable";
-        };
+  schemas: {
+    /** ErrorResponse */
+    ErrorResponse: {
+      /**
+       * Detail
+       * @description Explanation of the request error.
+       */
+      detail: string;
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    /** HealthResponse */
+    HealthResponse: {
+      /**
+       * Status
+       * @constant
+       */
+      status: "ok";
+    };
+    /** ImpactPathResponse */
+    ImpactPathResponse: {
+      /**
+       * Criticalities
+       * @description Edge criticality for each adjacent node pair, or null when unset.
+       */
+      criticalities: (string | null)[];
+      /**
+       * Edge Types
+       * @description Relationship type for each adjacent node pair.
+       */
+      edge_types: string[];
+      /**
+       * Node Ids
+       * @description Node IDs in traversal order, dependent to target.
+       */
+      node_ids: string[];
+    };
+    /**
+     * ImpactResponse
+     * @example {
+     *       "count": 1,
+     *       "dependents": [
+     *         {
+     *           "id": "app_ticketing",
+     *           "label": "Application",
+     *           "name": "Ticketing",
+     *           "paths": [
+     *             {
+     *               "criticalities": [
+     *                 "high"
+     *               ],
+     *               "edge_types": [
+     *                 "DEPENDS_ON"
+     *               ],
+     *               "node_ids": [
+     *                 "app_ticketing",
+     *                 "api_payment"
+     *               ]
+     *             }
+     *           ]
+     *         }
+     *       ],
+     *       "max_depth": 10,
+     *       "target_id": "api_payment"
+     *     }
+     */
+    ImpactResponse: {
+      /**
+       * Count
+       * @description Number of distinct dependent nodes returned.
+       */
+      count: number;
+      /**
+       * Dependents
+       * @description Nodes that depend on the target and their complete discovered paths.
+       */
+      dependents: components["schemas"]["ImpactedNodeResponse"][];
+      /**
+       * Max Depth
+       * @description Maximum relationship traversal depth used.
+       */
+      max_depth: number;
+      /**
+       * Target Id
+       * @description ID of the node whose impact was requested.
+       */
+      target_id: string;
+    };
+    /** ImpactedNodeResponse */
+    ImpactedNodeResponse: {
+      /**
+       * Id
+       * @description ID of the node that depends on the target.
+       */
+      id: string;
+      /**
+       * Label
+       * @description Graph label of the dependent node.
+       */
+      label: string;
+      /**
+       * Name
+       * @description Display name of the dependent node.
+       */
+      name: string;
+      /**
+       * Paths
+       * @description All discovered paths from this dependent to the target.
+       */
+      paths: components["schemas"]["ImpactPathResponse"][];
+    };
+    /** NotReadyDetail */
+    NotReadyDetail: {
+      services: components["schemas"]["ServiceStatuses"];
+      /**
+       * Status
+       * @constant
+       */
+      status: "not_ready";
+    };
+    /** NotReadyResponse */
+    NotReadyResponse: {
+      detail: components["schemas"]["NotReadyDetail"];
+    };
+    /** ReadyResponse */
+    ReadyResponse: {
+      services: components["schemas"]["ServiceStatuses"];
+      /**
+       * Status
+       * @constant
+       */
+      status: "ready";
+    };
+    /** ServiceStatuses */
+    ServiceStatuses: {
+      /**
+       * Neo4J
+       * @enum {string}
+       */
+      neo4j: "ok" | "unavailable";
+      /**
+       * Postgres
+       * @enum {string}
+       */
+      postgres: "ok" | "unavailable";
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    health_health_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthResponse"];
-                };
-            };
-        };
+  health_health_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    ready_ready_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReadyResponse"];
-                };
-            };
-            /** @description Service Unavailable */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NotReadyResponse"];
-                };
-            };
+        content: {
+          "application/json": components["schemas"]["HealthResponse"];
         };
+      };
     };
+  };
+  node_impact_nodes__node_id__impact_get: {
+    parameters: {
+      query?: {
+        /** @description Maximum traversal depth. */
+        max_depth?: number;
+      };
+      header?: never;
+      path: {
+        /** @description ID of the target graph node. */
+        node_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ImpactResponse"];
+        };
+      };
+      /** @description The target node does not exist. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description The query parameter failed validation. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description The graph database is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  ready_ready_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReadyResponse"];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotReadyResponse"];
+        };
+      };
+    };
+  };
 }

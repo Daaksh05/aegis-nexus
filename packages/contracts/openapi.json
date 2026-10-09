@@ -1,6 +1,18 @@
 {
   "components": {
     "schemas": {
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "description": "Explanation of the request error.",
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": ["detail"],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
       "HealthResponse": {
         "properties": {
           "status": {
@@ -9,10 +21,127 @@
             "type": "string"
           }
         },
-        "required": [
-          "status"
-        ],
+        "required": ["status"],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "ImpactPathResponse": {
+        "properties": {
+          "criticalities": {
+            "description": "Edge criticality for each adjacent node pair, or null when unset.",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Criticalities",
+            "type": "array"
+          },
+          "edge_types": {
+            "description": "Relationship type for each adjacent node pair.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Edge Types",
+            "type": "array"
+          },
+          "node_ids": {
+            "description": "Node IDs in traversal order, dependent to target.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Node Ids",
+            "type": "array"
+          }
+        },
+        "required": ["node_ids", "edge_types", "criticalities"],
+        "title": "ImpactPathResponse",
+        "type": "object"
+      },
+      "ImpactResponse": {
+        "examples": [
+          {
+            "count": 1,
+            "dependents": [
+              {
+                "id": "app_ticketing",
+                "label": "Application",
+                "name": "Ticketing",
+                "paths": [
+                  {
+                    "criticalities": ["high"],
+                    "edge_types": ["DEPENDS_ON"],
+                    "node_ids": ["app_ticketing", "api_payment"]
+                  }
+                ]
+              }
+            ],
+            "max_depth": 10,
+            "target_id": "api_payment"
+          }
+        ],
+        "properties": {
+          "count": {
+            "description": "Number of distinct dependent nodes returned.",
+            "title": "Count",
+            "type": "integer"
+          },
+          "dependents": {
+            "description": "Nodes that depend on the target and their complete discovered paths.",
+            "items": {
+              "$ref": "#/components/schemas/ImpactedNodeResponse"
+            },
+            "title": "Dependents",
+            "type": "array"
+          },
+          "max_depth": {
+            "description": "Maximum relationship traversal depth used.",
+            "title": "Max Depth",
+            "type": "integer"
+          },
+          "target_id": {
+            "description": "ID of the node whose impact was requested.",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": ["target_id", "max_depth", "count", "dependents"],
+        "title": "ImpactResponse",
+        "type": "object"
+      },
+      "ImpactedNodeResponse": {
+        "properties": {
+          "id": {
+            "description": "ID of the node that depends on the target.",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "description": "Graph label of the dependent node.",
+            "title": "Label",
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name of the dependent node.",
+            "title": "Name",
+            "type": "string"
+          },
+          "paths": {
+            "description": "All discovered paths from this dependent to the target.",
+            "items": {
+              "$ref": "#/components/schemas/ImpactPathResponse"
+            },
+            "title": "Paths",
+            "type": "array"
+          }
+        },
+        "required": ["id", "name", "label", "paths"],
+        "title": "ImpactedNodeResponse",
         "type": "object"
       },
       "NotReadyDetail": {
@@ -26,10 +155,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "status",
-          "services"
-        ],
+        "required": ["status", "services"],
         "title": "NotReadyDetail",
         "type": "object"
       },
@@ -39,9 +165,7 @@
             "$ref": "#/components/schemas/NotReadyDetail"
           }
         },
-        "required": [
-          "detail"
-        ],
+        "required": ["detail"],
         "title": "NotReadyResponse",
         "type": "object"
       },
@@ -56,36 +180,24 @@
             "type": "string"
           }
         },
-        "required": [
-          "status",
-          "services"
-        ],
+        "required": ["status", "services"],
         "title": "ReadyResponse",
         "type": "object"
       },
       "ServiceStatuses": {
         "properties": {
           "neo4j": {
-            "enum": [
-              "ok",
-              "unavailable"
-            ],
+            "enum": ["ok", "unavailable"],
             "title": "Neo4J",
             "type": "string"
           },
           "postgres": {
-            "enum": [
-              "ok",
-              "unavailable"
-            ],
+            "enum": ["ok", "unavailable"],
             "title": "Postgres",
             "type": "string"
           }
         },
-        "required": [
-          "postgres",
-          "neo4j"
-        ],
+        "required": ["postgres", "neo4j"],
         "title": "ServiceStatuses",
         "type": "object"
       }
@@ -113,6 +225,74 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/nodes/{node_id}/impact": {
+      "get": {
+        "operationId": "node_impact_nodes__node_id__impact_get",
+        "parameters": [
+          {
+            "description": "ID of the target graph node.",
+            "in": "path",
+            "name": "node_id",
+            "required": true,
+            "schema": {
+              "description": "ID of the target graph node.",
+              "title": "Node Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Maximum traversal depth.",
+            "in": "query",
+            "name": "max_depth",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "description": "Maximum traversal depth.",
+              "maximum": 10,
+              "minimum": 1,
+              "title": "Max Depth",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImpactResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The target node does not exist."
+          },
+          "422": {
+            "description": "The query parameter failed validation."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The graph database is unavailable."
+          }
+        },
+        "summary": "Node Impact"
       }
     },
     "/ready": {

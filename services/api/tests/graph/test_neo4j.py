@@ -2,11 +2,14 @@ from collections.abc import Iterator
 from uuid import uuid4
 
 import pytest
+from fastapi.testclient import TestClient
 from neo4j.exceptions import ServiceUnavailable
 
 from app.config import get_settings
+from app.graph.dependencies import get_graph_repository
 from app.graph.queries import DELETE_TEST_NODES
 from app.graph.repository import GraphRepository, ImpactPath, create_driver
+from app.main import app
 
 
 @pytest.fixture
@@ -61,6 +64,38 @@ def test_payment_impact_returns_full_paths(graph: tuple[GraphRepository, str]) -
         ("SERVED_BY", "DEPENDS_ON", "DEPENDS_ON"),
         ("low", "medium", "high"),
     )
+
+
+@pytest.mark.neo4j
+def test_impact_endpoint_returns_full_path(graph: tuple[GraphRepository, str]) -> None:
+    repository, _ = graph
+    app.dependency_overrides[get_graph_repository] = lambda: repository
+    try:
+        with TestClient(app) as client:
+            response = client.get("/nodes/api_payment/impact?max_depth=1")
+    finally:
+        app.dependency_overrides.pop(get_graph_repository, None)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "target_id": "api_payment",
+        "max_depth": 1,
+        "count": 1,
+        "dependents": [
+            {
+                "id": "app_ticketing",
+                "name": "Ticketing",
+                "label": "Application",
+                "paths": [
+                    {
+                        "node_ids": ["app_ticketing", "api_payment"],
+                        "edge_types": ["DEPENDS_ON"],
+                        "criticalities": ["high"],
+                    }
+                ],
+            }
+        ],
+    }
 
 
 @pytest.mark.neo4j

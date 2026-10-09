@@ -23,6 +23,10 @@ EDGE_PROPERTIES: Final[frozenset[str]] = frozenset(
     {"criticality", "redundancy", "recovery_time_minutes"}
 )
 GET_NODE = "MATCH (node {id: $id}) RETURN properties(node) AS node LIMIT 1"
+GET_NODE_DETAILS = (
+    "MATCH (node) WHERE node.id IN $ids "
+    "RETURN node.id AS id, node.name AS name, labels(node)[0] AS label"
+)
 TARGET_EXISTS = "MATCH (target {id: $id}) RETURN target.id AS id LIMIT 1"
 DELETE_TEST_NODES = "MATCH (node {test_run: $test_run}) DETACH DELETE node"
 
