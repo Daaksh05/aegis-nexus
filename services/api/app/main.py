@@ -1,11 +1,55 @@
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Annotated, Literal
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from neo4j.exceptions import GqlError, ServiceUnavailable, SessionExpired
 from pydantic import BaseModel
 
+from app.graph.repository import GraphRepository
+from app.graph.routes import router as graph_router
 from app.healthchecks import check_neo4j, check_postgres
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+    repository = GraphRepository()
+    application.state.graph_repository = repository
+    try:
+        yield
+    finally:
+        repository.close()
+
+
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+app.include_router(graph_router)
+
+
+async def graph_unavailable_handler(
+    request: Request,
+    exc: Exception,
+) -> JSONResponse:
+    if isinstance(exc, ServiceUnavailable | SessionExpired):
+        status_code = 503
+        detail = "Graph database is unavailable"
+    else:
+        status_code = 500
+        detail = "Graph database error"
+    logger.error(
+        detail,
+        exc_info=(type(exc), exc, exc.__traceback__),
+    )
+    return JSONResponse(
+        status_code=status_code,
+        content={"detail": detail},
+    )
+
+
+app.add_exception_handler(GqlError, graph_unavailable_handler)
 
 
 class HealthResponse(BaseModel):

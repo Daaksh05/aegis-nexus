@@ -2,9 +2,10 @@ from typing import Annotated
 
 import psycopg
 from fastapi import Depends
-from neo4j import GraphDatabase
 
 from app.config import Settings, get_settings
+from app.graph.dependencies import get_graph_repository
+from app.graph.repository import GraphRepository
 
 
 def check_postgres(settings: Annotated[Settings, Depends(get_settings)]) -> bool:
@@ -23,17 +24,11 @@ def check_postgres(settings: Annotated[Settings, Depends(get_settings)]) -> bool
         return False
 
 
-def check_neo4j(settings: Annotated[Settings, Depends(get_settings)]) -> bool:
-    driver = None
+def check_neo4j(
+    repository: Annotated[GraphRepository, Depends(get_graph_repository)],
+) -> bool:
     try:
-        driver = GraphDatabase.driver(
-            settings.neo4j_uri,
-            auth=(settings.neo4j_user, settings.neo4j_password),
-        )
-        driver.verify_connectivity()
+        repository.verify_connectivity()
         return True
     except Exception:
         return False
-    finally:
-        if driver is not None:
-            driver.close()
