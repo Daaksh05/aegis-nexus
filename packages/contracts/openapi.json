@@ -242,6 +242,135 @@
         ],
         "title": "ServiceStatuses",
         "type": "object"
+      },
+      "SpofEvidenceItemResponse": {
+        "properties": {
+          "dependent_id": {
+            "description": "ID of the node depending on the target.",
+            "title": "Dependent Id",
+            "type": "string"
+          },
+          "dependent_label": {
+            "description": "Graph label of the dependent node.",
+            "title": "Dependent Label",
+            "type": "string"
+          },
+          "dependent_name": {
+            "description": "Display name of the dependent node.",
+            "title": "Dependent Name",
+            "type": "string"
+          },
+          "edge_redundancies": {
+            "description": "Redundancy metadata for each edge, in node_ids order; null means unspecified.",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Edge Redundancies",
+            "type": "array"
+          },
+          "explicit_zero_on_target_edge": {
+            "description": "Whether redundancy is explicitly zero on the final edge into the target.",
+            "title": "Explicit Zero On Target Edge",
+            "type": "boolean"
+          },
+          "node_ids": {
+            "description": "Node IDs in traversal order, dependent to target.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Node Ids",
+            "type": "array"
+          },
+          "path_depth": {
+            "description": "Number of DEPENDS_ON relationships in this path.",
+            "title": "Path Depth",
+            "type": "integer"
+          },
+          "target_edge_redundancy": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Redundancy metadata on the final edge into the target, or null if unspecified.",
+            "title": "Target Edge Redundancy"
+          },
+          "target_edge_redundancy_unspecified": {
+            "description": "Whether redundancy is unspecified on the final edge into the target.",
+            "title": "Target Edge Redundancy Unspecified",
+            "type": "boolean"
+          },
+          "target_label": {
+            "description": "Graph label of the dependency target.",
+            "title": "Target Label",
+            "type": "string"
+          },
+          "target_name": {
+            "description": "Display name of the dependency target.",
+            "title": "Target Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_name",
+          "target_label",
+          "dependent_id",
+          "dependent_name",
+          "dependent_label",
+          "path_depth",
+          "node_ids",
+          "edge_redundancies",
+          "target_edge_redundancy",
+          "explicit_zero_on_target_edge",
+          "target_edge_redundancy_unspecified"
+        ],
+        "title": "SpofEvidenceItemResponse",
+        "type": "object"
+      },
+      "SpofEvidenceResponse": {
+        "properties": {
+          "count": {
+            "description": "Number of distinct dependent paths returned.",
+            "title": "Count",
+            "type": "integer"
+          },
+          "evidence": {
+            "description": "Potential single-point-of-failure evidence only; redundancy metadata does not prove that failover is available.",
+            "items": {
+              "$ref": "#/components/schemas/SpofEvidenceItemResponse"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "max_depth": {
+            "description": "Maximum DEPENDS_ON traversal depth used.",
+            "title": "Max Depth",
+            "type": "integer"
+          },
+          "target_id": {
+            "description": "ID of the node whose dependency evidence was requested.",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_id",
+          "max_depth",
+          "count",
+          "evidence"
+        ],
+        "title": "SpofEvidenceResponse",
+        "type": "object"
       }
     }
   },
@@ -335,6 +464,75 @@
           }
         },
         "summary": "Node Impact"
+      }
+    },
+    "/nodes/{node_id}/spof-evidence": {
+      "get": {
+        "operationId": "node_spof_evidence_nodes__node_id__spof_evidence_get",
+        "parameters": [
+          {
+            "description": "ID of the target graph node.",
+            "in": "path",
+            "name": "node_id",
+            "required": true,
+            "schema": {
+              "description": "ID of the target graph node.",
+              "minLength": 1,
+              "title": "Node Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Maximum traversal depth.",
+            "in": "query",
+            "name": "max_depth",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "description": "Maximum traversal depth.",
+              "maximum": 10,
+              "minimum": 1,
+              "title": "Max Depth",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpofEvidenceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The target node does not exist."
+          },
+          "422": {
+            "description": "The query parameter failed validation."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The graph database is unavailable."
+          }
+        },
+        "summary": "Node Spof Evidence"
       }
     },
     "/ready": {
