@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/nodes/{node_id}/spof-evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Node Spof Evidence */
+        get: operations["node_spof_evidence_nodes__node_id__spof_evidence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ready": {
         parameters: {
             query?: never;
@@ -202,6 +219,87 @@ export interface components {
              */
             postgres: "ok" | "unavailable";
         };
+        /** SpofEvidenceItemResponse */
+        SpofEvidenceItemResponse: {
+            /**
+             * Dependent Id
+             * @description ID of the node depending on the target.
+             */
+            dependent_id: string;
+            /**
+             * Dependent Label
+             * @description Graph label of the dependent node.
+             */
+            dependent_label: string;
+            /**
+             * Dependent Name
+             * @description Display name of the dependent node.
+             */
+            dependent_name: string;
+            /**
+             * Edge Redundancies
+             * @description Redundancy metadata for each edge, in node_ids order; null means unspecified.
+             */
+            edge_redundancies: (number | null)[];
+            /**
+             * Explicit Zero On Target Edge
+             * @description Whether redundancy is explicitly zero on the final edge into the target.
+             */
+            explicit_zero_on_target_edge: boolean;
+            /**
+             * Node Ids
+             * @description Node IDs in traversal order, dependent to target.
+             */
+            node_ids: string[];
+            /**
+             * Path Depth
+             * @description Number of DEPENDS_ON relationships in this path.
+             */
+            path_depth: number;
+            /**
+             * Target Edge Redundancy
+             * @description Redundancy metadata on the final edge into the target, or null if unspecified.
+             */
+            target_edge_redundancy: number | null;
+            /**
+             * Target Edge Redundancy Unspecified
+             * @description Whether redundancy is unspecified on the final edge into the target.
+             */
+            target_edge_redundancy_unspecified: boolean;
+            /**
+             * Target Label
+             * @description Graph label of the dependency target.
+             */
+            target_label: string;
+            /**
+             * Target Name
+             * @description Display name of the dependency target.
+             */
+            target_name: string;
+        };
+        /** SpofEvidenceResponse */
+        SpofEvidenceResponse: {
+            /**
+             * Count
+             * @description Number of distinct dependent paths returned.
+             */
+            count: number;
+            /**
+             * Evidence
+             * @description Potential single-point-of-failure evidence only; redundancy metadata does not prove that failover is available.
+             */
+            evidence: components["schemas"]["SpofEvidenceItemResponse"][];
+            /**
+             * Max Depth
+             * @description Maximum DEPENDS_ON traversal depth used.
+             */
+            max_depth: number;
+            /**
+             * Target Id
+             * @description ID of the node whose dependency evidence was requested.
+             */
+            target_id: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -253,6 +351,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImpactResponse"];
+                };
+            };
+            /** @description The target node does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The query parameter failed validation. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The graph database is unavailable. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    node_spof_evidence_nodes__node_id__spof_evidence_get: {
+        parameters: {
+            query?: {
+                /** @description Maximum traversal depth. */
+                max_depth?: number;
+            };
+            header?: never;
+            path: {
+                /** @description ID of the target graph node. */
+                node_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpofEvidenceResponse"];
                 };
             };
             /** @description The target node does not exist. */
