@@ -1,3 +1,4 @@
+import os
 from collections.abc import Iterator
 from uuid import uuid4
 
@@ -21,6 +22,8 @@ def graph() -> Iterator[tuple[GraphRepository, str]]:
         repository.verify_connectivity()
     except (ServiceUnavailable, ConnectionError) as exc:
         repository.close()
+        if os.environ.get("NEO4J_REQUIRED") == "true":
+            pytest.fail(f"Neo4j is unreachable at {settings.neo4j_uri}: {exc}", pytrace=False)
         pytest.skip(f"Neo4j is unreachable at {settings.neo4j_uri}: {exc}")
     test_run = str(uuid4())
     try:
