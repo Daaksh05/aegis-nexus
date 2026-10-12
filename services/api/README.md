@@ -29,6 +29,15 @@ edge criticality. The optional `max_depth` query parameter is an integer from
 1 through 10 and defaults to 10. Unknown target IDs return `404`; invalid
 `max_depth` values return FastAPI's `422` validation response.
 
+## SPOF evidence endpoint
+
+`GET /nodes/{node_id}/spof-evidence` returns direct and transitive `DEPENDS_ON`
+paths to the requested target, with per-edge redundancy metadata. The optional
+`max_depth` query parameter accepts integers from 1 through 10 and defaults to
+10. Unknown target IDs return `404`; invalid depths return `422`. Redundancy
+values are reported as evidence only: zero is distinct from unspecified
+metadata, and positive redundancy does not guarantee failover.
+
 For the full stack, copy the repository's `.env.example` to `.env` and run
 `docker compose --env-file .env -f infra/docker-compose.yml up --build` from the
 repository root.
