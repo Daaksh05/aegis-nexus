@@ -11,10 +11,23 @@ permissions:
 
 jobs:
   api:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    services:
+      neo4j:
+        image: neo4j:5.26.31-community
+        env:
+          NEO4J_AUTH: neo4j/change-me
+        ports:
+          - 7687:7687
+        options: >-
+          --health-cmd "bash -c 'echo > /dev/tcp/127.0.0.1/7687'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 30s
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v7.0.1
 
       - name: Detect API source
         id: detect
@@ -28,7 +41,7 @@ jobs:
 
       - name: Set up Python
         if: steps.detect.outputs.has_code == 'true'
-        uses: actions/setup-python@v5.6.0
+        uses: actions/setup-python@v7.0.0
         with:
           python-version-file: .python-version
           cache: pip
@@ -54,13 +67,18 @@ jobs:
 
       - name: Pytest
         if: steps.detect.outputs.has_code == 'true'
+        env:
+          NEO4J_URI: bolt://localhost:7687
+          NEO4J_USER: neo4j
+          NEO4J_PASSWORD: change-me
+          NEO4J_REQUIRED: "true"
         run: cd services/api && PYTHONPATH=. pytest
 
   web:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v7.0.1
 
       - name: Detect web source
         id: detect
@@ -74,7 +92,7 @@ jobs:
 
       - name: Set up Node.js
         if: steps.detect.outputs.has_code == 'true'
-        uses: actions/setup-node@v4.4.0
+        uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .nvmrc
           cache: npm
