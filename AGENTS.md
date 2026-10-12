@@ -68,7 +68,11 @@ Neo4j does not allow a parameter in the range. Validate `max_depth` as an int
 - All Cypher lives in `services/api/app/graph/queries.py`. Never inline Cypher in routes.
 - Route handlers stay thin: validate, call a query function, shape the response.
 - Parameterized Cypher only. No f-strings with user input (except the validated depth).
-- Every endpoint needs a pytest test using the seed data (`data/seed/transit.cypher`).
+- Focused unit and integration tests may use isolated synthetic fixtures.
+- Tests that require a representative full transit graph must load the canonical
+  seed dataset from `data/seed/transit.cypher`. That dataset should contain
+  approximately 80-120 nodes and follow the documented graph schema.
+- Tests using isolated fixtures must not claim to use the canonical seed dataset.
 - Query tests must run without the API layer.
 - Unknown node id -> 404. Invalid depth -> 422.
 - Type hints and Pydantic response models everywhere.
