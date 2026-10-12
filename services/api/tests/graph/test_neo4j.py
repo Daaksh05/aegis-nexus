@@ -36,8 +36,12 @@ def graph() -> Iterator[tuple[GraphRepository, str]]:
         )
         for label, node_id, name in nodes:
             repository.upsert_node(label, node_id, name, test_run=test_run)
-        repository.upsert_edge("app_ticketing", "DEPENDS_ON", "api_payment", criticality="high")
-        repository.upsert_edge("svc_fares", "DEPENDS_ON", "app_ticketing", criticality="medium")
+        repository.upsert_edge(
+            "app_ticketing", "DEPENDS_ON", "api_payment", criticality="high", redundancy=0
+        )
+        repository.upsert_edge(
+            "svc_fares", "DEPENDS_ON", "app_ticketing", criticality="medium", redundancy=3
+        )
         repository.upsert_edge("group_commuters", "SERVED_BY", "svc_fares", criticality="low")
         repository.upsert_edge("app_ticketing", "HOSTED_ON", "cloud_x")
         yield repository, test_run
@@ -67,6 +71,44 @@ def test_payment_impact_returns_full_paths(graph: tuple[GraphRepository, str]) -
         ("SERVED_BY", "DEPENDS_ON", "DEPENDS_ON"),
         ("low", "medium", "high"),
     )
+
+
+@pytest.mark.neo4j
+def test_spof_evidence_preserves_paths_and_redundancy_metadata(
+    graph: tuple[GraphRepository, str],
+) -> None:
+    repository, test_run = graph
+    repository.upsert_node("System", "sys_network", "Transit Network", test_run=test_run)
+    repository.upsert_edge("sys_network", "DEPENDS_ON", "api_payment")
+
+    result = repository.get_spof_evidence(target_id="api_payment")
+    assert result.found
+    payment_paths = [item for item in result.evidence if item.target_id == "api_payment"]
+
+    assert {item.dependent_id for item in payment_paths} == {
+        "app_ticketing",
+        "svc_fares",
+        "sys_network",
+    }
+    by_dependent = {item.dependent_id: item for item in payment_paths}
+    assert by_dependent["app_ticketing"].node_ids == ("app_ticketing", "api_payment")
+    assert by_dependent["app_ticketing"].edge_redundancies == (0,)
+    assert by_dependent["app_ticketing"].explicit_zero_on_target_edge
+    assert by_dependent["svc_fares"].node_ids == (
+        "svc_fares",
+        "app_ticketing",
+        "api_payment",
+    )
+    assert by_dependent["svc_fares"].edge_redundancies == (3, 0)
+    assert by_dependent["sys_network"].edge_redundancies == (None,)
+    assert by_dependent["sys_network"].target_edge_redundancy_unspecified
+
+    ticketing_result = repository.get_spof_evidence(target_id="app_ticketing")
+    positive_edge = next(
+        item for item in ticketing_result.evidence if item.dependent_id == "svc_fares"
+    )
+    assert positive_edge.target_edge_redundancy == 3
+    assert not positive_edge.explicit_zero_on_target_edge
 
 
 @pytest.mark.neo4j
