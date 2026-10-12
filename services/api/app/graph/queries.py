@@ -88,3 +88,26 @@ def impact_query(max_depth: object) -> str:
         "[rel IN rels | rel.criticality] AS criticalities "
         "ORDER BY dependent_id, node_ids, edge_types"
     )
+
+
+def spof_query(max_depth: object = 10) -> str:
+    depth = validate_max_depth(max_depth)
+    # Return evidence only; redundancy metadata does not guarantee failover.
+    return (
+        "MATCH p = (dependent)-[rels:DEPENDS_ON*1.."
+        f"{depth}]->(target) "
+        "WHERE $target_id IS NULL OR target.id = $target_id "
+        "RETURN DISTINCT "
+        "target.id AS target_id, target.name AS target_name, "
+        "labels(target)[0] AS target_label, "
+        "dependent.id AS dependent_id, dependent.name AS dependent_name, "
+        "labels(dependent)[0] AS dependent_label, "
+        "length(p) AS path_depth, "
+        "[node IN nodes(p) | node.id] AS node_ids, "
+        "[rel IN rels | rel.redundancy] AS edge_redundancies, "
+        "last(rels).redundancy AS target_edge_redundancy, "
+        "coalesce(last(rels).redundancy = 0, false) "
+        "AS explicit_zero_on_target_edge, "
+        "last(rels).redundancy IS NULL AS target_edge_redundancy_unspecified "
+        "ORDER BY target_id, dependent_id, node_ids"
+    )
